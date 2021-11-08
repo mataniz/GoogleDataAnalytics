@@ -1,0 +1,183 @@
+```{r load-packages, include=FALSE}
+library(dplyr)
+library(magrittr)
+library(knitr)
+library(sqldf)
+library(ggplot2)
+```
+
+---
+title: "BellaBeat Case Study"
+author: "Zubair Matani"
+date: "11/5/2021"
+output: html_document
+---
+
+![bellabeat logo](/cloud/project/Case Study/BellBeats.PNG)
+
+## Introduction
+
+This is a Google Data Analytics Capstone project. The purpose of this project is to learn, understand and apply the concepts we learnt in the Google Analytics Course. 
+
+## Goals and Business Statement
+
+This case study tasks us with assisting a wearable fitness technology company, BellaBeat, improve their marketing strategies for their products by investigating customer activity with other fitness trackers like FitBit. 
+
+We will look at datasets to find the following: 
+
+* How customers use fitness trackers in their everyday life?
+* What features are most popularly used? 
+* Which of these features does BellBeat already have, and how can we improve our marketing skills for those?
+* What additional features can BellBeat introduce to add more customers? 
+
+
+## Data Usage
+### What Data are We Using?
+
+The data provided to us by BellBeats is <https://www.kaggle.com/arashnic/fitbit>. This data website ranges from their daily activities, to their steps to their heart rate, calories intake and much more. All of the data is stored in different .csv files which we will be impporting to analyze and support our statements. 
+
+### Loading CSV Files
+
+The following data sets will be used: 
+
+* Daily Activity
+* Daily Calories
+* Daily Sleep
+* Weight Log Info
+* Daily intensities
+
+```{r}
+dailyActivity <- read.csv("dailyActivity_merged.csv")
+dailyCalories <- read.csv("dailyCalories_merged.csv")
+sleepDay <- read.csv("sleepDay_merged.csv")
+dailyIntensities <- read.csv("dailyIntensities_merged.csv")
+weightLog <- read.csv("weightLogInfo_merged.csv")
+```
+
+## Exploring the Tables 
+
+For each of the tables we have decided to work our analysis with, we will take a closer look at them using the head(), glimpse() and colnames() function. This would allow us to look at the first six values of each table and see each table with it's distributed columns respectively. 
+### Daily Activities
+```{r}
+head(dailyActivity)
+glimpse(dailyActivity)
+colnames(dailyActivity)
+```
+
+### Daily Carlories
+```{r}
+head(dailyCalories)
+glimpse(dailyCalories)
+colnames(dailyCalories)
+```
+
+### Daily Intensities
+```{r}
+head(dailyIntensities)
+glimpse(dailyIntensities)
+colnames(dailyIntensities)
+```
+
+### Sleep Day 
+```{r}
+head(sleepDay)
+glimpse(sleepDay)
+colnames(sleepDay)
+```
+
+### Weight Log
+```{r}
+head(weightLog)
+glimpse(weightLog)
+colnames(weightLog)
+```
+## Short Summary
+
+Using the glimpse and the column names functions, it is easily noticeable that the ID column is common all 5 data sets in this analysis. 
+
+The daily activity table gives us a hint that it contains values for calories and intensities as well which would allow us to extract data only using the ID column. 
+
+In order to shorten our summary table we will create a new data frame selecting only ID, ActivityDate and and Calories. 
+
+```{r}
+dailyActivityNewFrame <- dailyActivity %>%
+  select(Id, ActivityDate, Calories)
+
+head(dailyActivityNewFrame)
+```
+
+To make sure the new data frame we have just created has the correct number of rows, we will use an SQL query to check the number of rows. 
+
+```{r}
+sqlCheck <- sqldf('SELECT * FROM dailyActivityNewFrame INTERSECT SELECT * FROM dailyCalories')
+head(sqlCheck)
+nrow(sqlCheck)
+```
+The nrow() function shows 940 shows which is the same as we noticed earlier hence our data check is verified and we are good to go ahead. 
+## Analysis
+For the analysis stage, we will consider distinct data from the tables which would allow us to analyze data for each ID and not the same repititative ones. 
+
+### Repitative vs Distinct Rows
+```{r}
+n_distinct(dailyActivity$Id)
+nrow(dailyActivity)
+```
+```{r}
+n_distinct(sleepDay$Id)
+nrow(sleepDay)
+```
+```{r}
+n_distinct(weightLog$Id)
+nrow(weightLog)
+```
+
+## Quick Statistics
+
+### Daily Activity
+```{r}
+dailyActivity %>%
+  select(TotalSteps, TotalDistance, SedentaryMinutes, VeryActiveMinutes) %>%
+  summary()
+```
+
+### Sleep
+```{r}
+sleepDay %>%
+  select(TotalSleepRecords, TotalMinutesAsleep, TotalTimeInBed) %>%
+  summary()
+```
+
+### Weight Log
+```{r}
+weightLog %>%
+  select(WeightPounds, BMI) %>%
+  summary()
+```
+
+## Analysis: Plot
+The plot for Total Steps vs Sedentary Minutes is as follows: 
+```{r}
+ggplot(data = dailyActivity, aes(x = TotalSteps, y = SedentaryMinutes, color = Calories)) + geom_point()
+```
+```{r}
+ggplot(data = dailyActivity, aes(x = TotalSteps, y = Calories)) + geom_point() + stat_smooth()
+```
+The graph above clearly demonstrates that the relation between the number of steps walked and the amount of calories burned is linear. The more the number of steps, the higher the calories burned. 
+
+```{r}
+ggplot(data = dailyActivity, aes(x = VeryActiveMinutes, y = Calories)) + geom_point() + stat_smooth()
+```
+
+```{r}
+ggplot(data = sleepDay, aes(x=TotalMinutesAsleep, y=TotalTimeInBed)) + geom_point()
+```
+This plot shows that people have not been logging their sleep hours in the proper manner and therefore this data is not too useful to make use of. 
+## Conclusion
+
+Some of the things I noticed when analyzing this data: 
+
+* Fitbit is not collecting any hydration data, Bellabeat does which makes it more user friendly and something that regular users would enjoy working with. 
+
+* People need to log their sleep times properly 
+
+* Another feature I would like Bellabeat to add is the different modes of exercise or to create a program that would allow the sensors to monitor and recognize what sort of exercise the user is doing and then log it in the watch rather than entering or starting the watch feature to collect data. 
